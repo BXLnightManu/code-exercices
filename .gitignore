@@ -1,0 +1,2 @@
+# exclude everything in node modules dorectory
+/node_modules/*
