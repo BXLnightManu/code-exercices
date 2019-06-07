@@ -4,6 +4,14 @@ const app = express();
 const sql = require('mssql');
 const port = 3000;
 
+const bodyParser = require('body-parser');
+// Support JSON-encoded bodies
+app.use(bodyParser.json());
+// Support URL-encoded bodies
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
+
 // connexion to database
 sql.connect(config, err => {
     
@@ -17,9 +25,9 @@ sql.connect(config, err => {
         app.get('/api/movies', (req, res) => {
         
             // querying the database to get the records
-            request.query('SELECT * FROM movie', (err, result) => {
+            request.execute('SelectAllMovies', (err, result) => {
                 if (err) {
-                    res.status(404).send('Error when trying to get the movie list.');
+                    res.status(500).send('Error when trying to get the all the movies.');
                 } else {
                     res.json(result);
                 };
@@ -30,11 +38,25 @@ sql.connect(config, err => {
             const name = req.params.names;       
 
             // querying the database to get the records
-            request.query(`SELECT * FROM movie WHERE name LIKE '%${name}%';`, (err, result) => {
+            request.input('movie', sql.NVarChar, name);
+            request.execute('SelectQueriedMovie', (err, result) => {
                 if (err) {
-                    res.status(404).send('Error when trying to get the movie list.');
+                    res.status(500).send(`Error when trying to get the movie corresponding to ${name}.`);
                 } else {
                     res.json(result);
+                };
+            });
+        });
+
+        app.post('/api/movies', (req, res) => {
+            const formData = req.body;
+            request.input('json', sql.NVarChar, formData);
+            request.execute('InsertMoviesByJson', (err, result) => {
+                if (err) {
+                    console.log(err);
+                    res.status(404).send('Error when trying to save the movie(s).');
+                } else {
+                    res.status(200).send(`${result.rowsAffected} Movie(s) saved!`);
                 };
             });
         });
