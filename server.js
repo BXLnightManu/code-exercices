@@ -61,6 +61,26 @@ sql.connect(config, err => {
                 };
             });
         });
+
+        app.put('/api/movies', (req, res) => {
+            const filmToModify = req.body.existingFilmName;
+            const newFilmName = req.body.newFilmName;
+            const newFilmPoster = req.body.newFilmPoster;
+            const newFilmComment = req.body.newFilmComment;
+
+            request.input('existingFilmName', sql.NVarChar, filmToModify);
+            request.input('newFilmName', sql.NVarChar, newFilmName);
+            request.input('newFilmPoster', sql.NVarChar, newFilmPoster);
+            request.input('newFilmComment', sql.NVarChar, newFilmComment);
+            request.execute('UpdateMovie', (err, result) => {
+                if (err) {
+                    console.log(err);
+                    res.status(500).send(`Error when trying to update the movie ${filmToModify}.`);
+                } else {
+                    res.status(200).send(`The Movie is correctly updated!`);
+                };
+            });
+        });
         
         app.listen(port, (err) => {
             if (err) throw new Error('Something bad happened...');
