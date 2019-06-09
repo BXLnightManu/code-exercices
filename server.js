@@ -23,10 +23,10 @@ sql.connect(config, err => {
         const request = new sql.Request();
 
         app.get('/api/movies', (req, res) => {
-        
             // querying the database to get the records
             request.execute('SelectAllMovies', (err, result) => {
                 if (err) {
+                    console.log(err);
                     res.status(500).send('Error when trying to get the all the movies.');
                 } else {
                     res.json(result);
@@ -49,12 +49,13 @@ sql.connect(config, err => {
         });
 
         app.post('/api/movies', (req, res) => {
-            const formData = req.body;
-            request.input('json', sql.NVarChar, formData);
+            const jsonData = JSON.stringify(req.body);
+
+            request.input('json', sql.NVarChar, jsonData);
             request.execute('InsertMoviesByJson', (err, result) => {
                 if (err) {
                     console.log(err);
-                    res.status(404).send('Error when trying to save the movie(s).');
+                    res.status(500).send('Error when trying to save the movie(s).');
                 } else {
                     res.status(200).send(`${result.rowsAffected} Movie(s) saved!`);
                 };
@@ -68,3 +69,23 @@ sql.connect(config, err => {
         });  
     };
 });
+
+// let succeesMessage = [];
+// let errorMessage = [];
+// let recordsNumber = 0;
+// for(let i=0;i<jsonData.length;i++) {
+//     request.input('name', sql.NVarChar, jsonData[i].name);
+//     request.input('poster', sql.NVarChar, jsonData[i].poster);
+//     request.input('comment', sql.NVarChar, jsonData[i].comment);
+//     request.execute('InsertMoviesByArray', (err, result) => {
+//         if (err) {
+//             console.log(err);
+//             errorMessage.push(`Error when trying to save the movie ${jsonData[i].name}.`);
+//         } else {
+//             succeesMessage.push(`The movie ${jsonData[i].name} is correctly saved!`);
+//             recordsNumber += result.rowsAffected;
+//         }
+//     });
+// };
+// succeesMessage.push(recordsNumber);
+// res.status(200).send(`${succeesMessage} + ${errorMessage}`);
