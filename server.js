@@ -23,7 +23,8 @@ sql.connect(config, err => {
         const request = new sql.Request();
 
         app.get('/api/movies', (req, res) => {
-            // querying the database to get the records
+            
+            // executing a stored procedure to get the all the records
             request.execute('SelectAllMovies', (err, result) => {
                 if (err) {
                     console.log(err);
@@ -35,9 +36,11 @@ sql.connect(config, err => {
         });
         
         app.get('/api/movies/:names', (req, res) => {
+            
+            // declaration of the variable which registers the parameter data
             const name = req.params.names;       
 
-            // querying the database to get the records
+            // executing a stored procedure to get the record which includes the paramater value of the request body
             request.input('movie', sql.NVarChar, name);
             request.execute('SelectQueriedMovie', (err, result) => {
                 if (err) {
@@ -49,8 +52,11 @@ sql.connect(config, err => {
         });
 
         app.post('/api/movies', (req, res) => {
+            
+            // transform the object - recieved from the body of the request - to a string, so the meet the format expected by the sql server
             const jsonData = JSON.stringify(req.body);
 
+            // executing a stored procedure to post new entries given by the request body
             request.input('json', sql.NVarChar, jsonData);
             request.execute('InsertMoviesByJson', (err, result) => {
                 if (err) {
@@ -63,11 +69,16 @@ sql.connect(config, err => {
         });
 
         app.put('/api/movies', (req, res) => {
+            
+            // declaration of the variable which registers the film already registered we want to modify
             const filmToModify = req.body.existingFilmName;
+
+            // declaration of variables which register the new data (to update)
             const newFilmName = req.body.newFilmName;
             const newFilmPoster = req.body.newFilmPoster;
             const newFilmComment = req.body.newFilmComment;
 
+            // executing a stored procedure to update film data
             request.input('existingFilmName', sql.NVarChar, filmToModify);
             request.input('newFilmName', sql.NVarChar, newFilmName);
             request.input('newFilmPoster', sql.NVarChar, newFilmPoster);
@@ -82,6 +93,23 @@ sql.connect(config, err => {
             });
         });
         
+        app.delete('/api/movies', (req, res) => {
+            
+            // declaration of the variable which registers the film already registered we want to delete
+            const filmToDelete = req.body.existingFilmName;
+
+            // executing a stored procedure to delete film data
+            request.input('existingFilmName', sql.NVarChar, filmToDelete);
+            request.execute('DeleteMovie', (err, result) => {
+                if (err) {
+                    console.log(err);
+                    res.status(500).send(`Error when trying to update the movie ${filmToDelete}.`);
+                } else {
+                    res.status(200).send(`The Movie corresponding to "${filmToDelete}" is correctly deleted!`);
+                };
+            });
+        });
+
         app.listen(port, (err) => {
             if (err) throw new Error('Something bad happened...');
         
@@ -89,23 +117,3 @@ sql.connect(config, err => {
         });  
     };
 });
-
-// let succeesMessage = [];
-// let errorMessage = [];
-// let recordsNumber = 0;
-// for(let i=0;i<jsonData.length;i++) {
-//     request.input('name', sql.NVarChar, jsonData[i].name);
-//     request.input('poster', sql.NVarChar, jsonData[i].poster);
-//     request.input('comment', sql.NVarChar, jsonData[i].comment);
-//     request.execute('InsertMoviesByArray', (err, result) => {
-//         if (err) {
-//             console.log(err);
-//             errorMessage.push(`Error when trying to save the movie ${jsonData[i].name}.`);
-//         } else {
-//             succeesMessage.push(`The movie ${jsonData[i].name} is correctly saved!`);
-//             recordsNumber += result.rowsAffected;
-//         }
-//     });
-// };
-// succeesMessage.push(recordsNumber);
-// res.status(200).send(`${succeesMessage} + ${errorMessage}`);
